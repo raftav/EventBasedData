@@ -5,12 +5,13 @@ import pandas as pd
 import math
 import librosa
 from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 
 
 # In[3]:
 
 
-filename='20170622-14-15-46-112_001jun_Successivo(sotto)_1.csv'
+filename='flow/20170622-14-37-19-582_001jun_IPEC_006_1.csv'
 data=pd.read_csv(filename)
 
 # convert timestemps in second
@@ -39,15 +40,13 @@ data['frame_index']=pd.cut(data['timestamp'],times,labels=indices,include_lowest
 frames=data.groupby('frame_index',observed=True)
 non_empty_frames=[k for k in frames.indices]
 
-
+all_frames=[i for i in range(n_frames)]
 # In[17]:
 
 
-fig ,ax = plt.subplots(figsize=(18,10))
+fig ,ax = plt.subplots(figsize=(8,10))
 
-def print_single_frame(frame_index):
-    plt.cla()
-    print(frame_index)
+def init_plot():
     xmax=310
     ymax=240
 
@@ -59,16 +58,64 @@ def print_single_frame(frame_index):
 
     #plt.colorbar()
     ax.grid()
-    ax.set_xlim(0,xmax)
+    #ax.set_xlim(0,xmax)
+    #ax.set_ylim(0,ymax)
+
+    ax.set_xlim(80,180)
     ax.set_ylim(0,ymax)
-    ax.set_title('frame number = {}   time={} s'.format(frame_index,frame_index*0.01))
 
-    x=frames.get_group(frame_index)['X']
-    y=frames.get_group(frame_index)['Y']
-    speed=frames.get_group(frame_index)['speed']
-    
-    ax.scatter(x.values,y.values,c=speed.values,cmap='jet')
+def print_single_frame(frame_index):
+    plt.cla()
+    #print(frame_index)
+    xmax=310
+    ymax=240
 
-ani = FuncAnimation(fig, print_single_frame, frames=non_empty_frames)
-plt.show()
+    x_ticks=[i for i in range(0,xmax,10)]
+    y_ticks=[i for i in range(0,ymax,10)]
 
+    ax.set_xticks(ticks=x_ticks)
+    ax.set_yticks(ticks=y_ticks)
+
+    #plt.colorbar()
+    ax.grid()
+    ax.set_xlim(80,180)
+    ax.set_ylim(0,ymax)
+    ax.set_title('frame number = {:d}   time={:.3f} s'.format(frame_index,frame_index*0.01))
+
+    x=data.X.values
+    y=data.Y.values
+
+    ax.scatter(x,y,color='r',s=1.0)
+
+
+    if frame_index in non_empty_frames:
+        x=frames.get_group(frame_index)['X']
+        y=frames.get_group(frame_index)['Y']
+        vx=frames.get_group(frame_index)['VX']
+        vy=frames.get_group(frame_index)['VY']
+        
+        X=x.values
+        Y=y.values
+        U=vx.values * windows_shift *10
+        V=vy.values * windows_shift *10
+
+        #U = U / np.sqrt(U**2 + V**2) * 10;
+        #V = V / np.sqrt(U**2 + V**2) * 10;
+        
+        ax.scatter(x,y)
+        ax.quiver(X,Y,U,V,angles='xy',scale_units='xy', scale=1)
+        #ax.quiver(X,Y,U,V,scale=600)
+
+
+
+
+
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=100)
+
+
+
+ani = FuncAnimation(fig, print_single_frame, frames=all_frames,init_func=init_plot)
+
+ani.save('test.mp4', writer=writer)
+#plt.show()
