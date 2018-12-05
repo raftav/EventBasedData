@@ -3,23 +3,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
-import librosa
+#import librosa
 from matplotlib.animation import FuncAnimation
 import matplotlib.animation as animation
 
-
+print('Import complete')
 # In[3]:
 
 
-filename='flow/20170622-14-37-19-582_001jun_IPEC_006_1.csv'
+filename='denoised/flow_/bbaf5a_7events.csv'
 data=pd.read_csv(filename)
+
+speed_threshold=0.
+
+print('Data loaded')
 
 # convert timestemps in second
 data.timestamp=data.apply(lambda x: x.timestamp*1e-6,axis=1)
 
 # add speed
 data['speed']=np.sqrt(data.VX**2+data.VY**2)
-
+data=data[data.speed>=speed_threshold]
 
 # In[4]:
 
@@ -58,11 +62,11 @@ def init_plot():
 
     #plt.colorbar()
     ax.grid()
-    #ax.set_xlim(0,xmax)
-    #ax.set_ylim(0,ymax)
-
-    ax.set_xlim(80,180)
+    ax.set_xlim(0,xmax)
     ax.set_ylim(0,ymax)
+
+    #ax.set_xlim(80,180)
+    #ax.set_ylim(0,ymax)
 
 def print_single_frame(frame_index):
     plt.cla()
@@ -78,7 +82,7 @@ def print_single_frame(frame_index):
 
     #plt.colorbar()
     ax.grid()
-    ax.set_xlim(80,180)
+    ax.set_xlim(0,xmax)
     ax.set_ylim(0,ymax)
     ax.set_title('frame number = {:d}   time={:.3f} s'.format(frame_index,frame_index*0.01))
 
@@ -111,11 +115,11 @@ def print_single_frame(frame_index):
 
 
 Writer = animation.writers['ffmpeg']
-writer = Writer(fps=100)
+writer = Writer(fps=10)
 
 
 
 ani = FuncAnimation(fig, print_single_frame, frames=all_frames,init_func=init_plot)
 
-ani.save('test.mp4', writer=writer)
-#plt.show()
+#ani.save('test.mp4', writer=writer)
+plt.show()
